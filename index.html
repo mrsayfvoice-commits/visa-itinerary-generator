@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visa Itinerary Generator | AI-Powered Travel Planner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .country-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .main-content {
+            padding: 2rem;
+        }
+
+        .generator-card {
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: 15px;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .itinerary-output {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+            border-top: 4px solid var(--primary);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .disclaimer-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            header {
+                padding: 1.5rem;
+            }
+            
+            .main-content {
+                padding: 1.5rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">VisaPlan.ai</div>
+            <div class="tagline">AI-Powered Visa Itinerary Generator</div>
+            <div class="country-count">29 Countries Available</div>
+        </header>
+
+        <div class="main-content">
+            <div class="generator-card">
+                <h2 style="margin-bottom: 1.5rem; text-align: center;">Generate Your Itinerary</h2>
+                
+                <div class="disclaimer-box">
+                    <strong>Important:</strong> This tool creates suggested plans for visa applications. 
+                    It does not book actual flights or hotels. Always verify details before travel.
+                </div>
+
+                <form id="itineraryForm">
+                    <div class="form-group">
+                        <label for="country">Destination Country</label>
+                        <select id="country" required>
+                            <option value="">Select a country...</option>
+                            <!-- Schengen Countries -->
+                            <option value="Austria">Austria</option>
+                            <option value="Belgium">Belgium</option>
+                            <option value="Croatia">Croatia</option>
+                            <option value="Czech Republic">Czech Republic</option>
+                            <option value="Denmark">Denmark</option>
+                            <option value="Estonia">Estonia</option>
+                            <option value="Finland">Finland</option>
+                            <option value="France">France</option>
+                            <option value="Germany">Germany</option>
+                            <option value="Greece">Greece</option>
+                            <option value="Hungary">Hungary</option>
+                            <option value="Iceland">Iceland</option>
+                            <option value="Italy">Italy</option>
+                            <option value="Latvia">Latvia</option>
+                            <option value="Liechtenstein">Liechtenstein</option>
+                            <option value="Lithuania">Lithuania</option>
+                            <option value="Luxembourg">Luxembourg</option>
+                            <option value="Malta">Malta</option>
+                            <option value="Netherlands">Netherlands</option>
+                            <option value="Norway">Norway</option>
+                            <option value="Poland">Poland</option>
+                            <option value="Portugal">Portugal</option>
+                            <option value="Slovakia">Slovakia</option>
+                            <option value="Slovenia">Slovenia</option>
+                            <option value="Spain">Spain</option>
+                            <option value="Sweden">Sweden</option>
+                            <option value="Switzerland">Switzerland</option>
+                            
+                            <!-- Additional Countries -->
+                            <option value="United States">United States</option>
+                            <option value="Canada">Canada</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="duration">Trip Duration</label>
+                        <select id="duration" required>
+                            <option value="">Select duration...</option>
+                            <option value="7">7 Days</option>
+                            <option value="10">10 Days</option>
+                            <option value="14">14 Days</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-full">Generate Itinerary</button>
+                </form>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Creating your personalized itinerary...</p>
+            </div>
+
+            <div id="results" class="results-section">
+                <h2 style="text-align: center; margin-bottom: 1.5rem;">Your Custom Itinerary</h2>
+                
+                <div id="itineraryOutput" class="itinerary-output">
+                    <!-- Content will be inserted here -->
+                </div>
+
+                <div style="text-align: center;">
+                    <button id="downloadPdf" class="btn">Download as PDF</button>
+                    <button id="startOver" class="btn" style="background: var(--secondary); margin-left: 1rem;">Create Another</button>
+                </div>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🌍 29 Countries</h3>
+                    <p>All Schengen countries plus USA and Canada</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚡ Instant Generation</h3>
+                    <p>Get your itinerary in seconds, not hours</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📄 Visa Ready</h3>
+                    <p>Professional formats accepted by embassies</p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2023 VisaPlan.ai - Creating credible travel plans for visa applications worldwide.</p>
+            <p>This service provides suggested itineraries only. We are not responsible for visa approval decisions.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('itineraryForm');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const itineraryOutput = document.getElementById('itineraryOutput');
+            const downloadPdfBtn = document.getElementById('downloadPdf');
+            const startOverBtn = document.getElementById('startOver');
+
+            // Try to use AI in the background, but fallback to demo
+async function tryAIThenDemo(country, duration) {
+    const prompt = `Create a detailed ${duration}-day itinerary for ${country} for visa application. Include daily activities, cultural sites, and practical travel information.`;
+    
+    try {
+        // Try to use AI first (will work when hosted online)
+        // REPLACE THIS URL WITH YOUR GOOGLE APPS SCRIPT URL
+        const YOUR_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTcj_FcSyc7vCINDr-4QioYlw9wop3RwVPv9no1ETyWPI4iLpqMLBNd9zkAW11j7r9mQ/exec';
+        
+        const response = await fetch(YOUR_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: prompt })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.choices && data.choices[0] && data.choices[0].message) {
+                return data.choices[0].message.content;
+            }
+        }
+    } catch (error) {
+        console.log('AI not available, using demo content');
+    }
+    
+    // If AI fails, use demo content
+    return generateDemoItinerary(country, duration);
+}
+
+            // Generate demo itinerary
+            function generateDemoItinerary(country, duration) {
+                const itineraries = {
+                    'France': `<h3>🇫🇷 ${duration}-Day France Itinerary</h3>
+                    <p><strong>Perfect for your Schengen visa application</strong></p>
+                    <h4>Day 1: Arrival in Paris</h4>
+                    <p>• Morning: Arrive at CDG Airport, transfer to central hotel<br>
+                    • Afternoon: Visit Notre-Dame Cathedral and explore Île de la Cité<br>
+                    • Evening: Dinner in the Latin Quarter</p>
+                    
+                    <h4>Day 2: Paris Cultural Experience</h4>
+                    <p>• Morning: Louvre Museum (pre-book tickets recommended)<br>
+                    • Afternoon: Walk through Tuileries Garden to Champs-Élysées<br>
+                    • Evening: Eiffel Tower visit and Seine River cruise</p>
+                    
+                    <h4>Day 3: Art & History</h4>
+                    <p>• Morning: Musée d'Orsay impressionist collection<br>
+                    • Afternoon: Montmartre and Sacré-Cœur Basilica<br>
+                    • Evening: Traditional French dinner at local bistro</p>`,
+                    
+                    'Italy': `<h3>🇮🇹 ${duration}-Day Italy Itinerary</h3>
+                    <p><strong>Perfect for your Schengen visa application</strong></p>
+                    <h4>Day 1: Arrival in Rome</h4>
+                    <p>• Morning: Arrive at Fiumicino Airport, transfer to hotel<br>
+                    • Afternoon: Visit the Colosseum and Roman Forum<br>
+                    • Evening: Dinner in Trastevere neighborhood</p>
+                    
+                    <h4>Day 2: Vatican City & Historic Rome</h4>
+                    <p>• Morning: Vatican Museums and Sistine Chapel<br>
+                    • After极oon: St. Peter's Basilica and climb the dome<br>
+                    • Evening: Explore Piazza Navona and Pantheon</p>
+                    
+                    <h4>Day 3: Ancient Rome & Baroque Splendor</h4>
+                    <p>• Morning: Visit Capitoline Museums<br>
+                    • Afternoon: Trevi Fountain and Spanish Steps<br>
+                    • Evening: Traditional Roman dinner</p>`,
+                    
+                    'Germany': `<h3>🇩🇪 ${duration}-Day Germany Itinerary</h3>
+                    <p><strong>Perfect for your Schengen visa application</strong></p>
+                    <h4>Day 1: Arrival in Berlin</h4>
+                    <p>• Morning: Arrive at Berlin Brandenburg Airport, transfer to hotel<br>
+                    • Afternoon: Visit Brandenburg Gate and Reichstag Building<br>
+                    • Evening: Dinner at traditional German restaurant</p>
+                    
+                    <h4>Day 2: Berlin Historical Sites</h4>
+                    <极>• Morning: Berlin Wall Memorial and Checkpoint Charlie<br>
+                    • Afternoon: Museum Island exploration<br>
+                    • Evening: Kurfürstendamm shopping street</p>
+                    
+                    <h4>Day 3: Cultural Berlin</h4>
+                    <p>• Morning: Charlottenburg Palace tour<br>
+                    • Afternoon: Tiergarten park relaxation<br>
+                    • Evening: Berlin Philharmonic concert (if available)</p>`,
+                    
+                    'Spain': `<h3>🇪🇸 ${duration}-Day Spain Itinerary</h3>
+                    <p><strong>Perfect for your Schengen visa application</strong></p>
+                    <h4>Day 1: Arrival in Madrid</h4>
+                    <p>• Morning: Arrive at Madrid-Barajas Airport, transfer to hotel<br>
+                    • Afternoon: Visit Royal Palace of Madrid<br>
+                    • Evening: Tapas tour in La Latina neighborhood</p>
+                    
+                    <h4>Day 2: Madrid Art & Culture</h4>
+                    <p>• Morning: Prado Museum visit<br>
+                    • Afternoon: Retiro Park relaxation<br>
+                    • Evening: Flamenco show experience</p>
+                    
+                    <h4>Day 3: Historical Madrid</h4>
+                    <p>• Morning: Plaza Mayor and Puerta del Sol<br>
+                    • Afternoon: Shopping in Gran Vía<br>
+                    • Evening: Traditional Spanish dinner</p>`,
+                    
+                    'United States': `<h3>🇺🇸 ${duration}-Day USA Itinerary</h3>
+                    <p><strong>Complete plan for US visa application</strong></p>
+                    <h4>Day 1: Arrival in New York</h4>
+                    <p>• Morning: Arrive at JFK Airport<br>
+                    • Afternoon: Check into hotel near Times Square<br>
+                    • Evening: Times Square exploration</p>
+                    
+                    <h4>Day 2: Manhattan Sightseeing</h4>
+                    <p>• Morning: Statue of Liberty and Ellis Island<br>
+                    • Afternoon: Financial District and 9/11 Memorial<br>
+                    • Evening: Broadway show experience</p>
+                    
+                    <h4>Day 3: Cultural New York</h4>
+                    <p>• Morning: Metropolitan Museum of Art<br>
+                    • Afternoon: Central Park exploration<br>
+                    • Evening: Dinner in Little Italy</p>`,
+                    
+                    'Canada': `<h3>🇨🇦 ${duration}-Day Canada Itinerary</h3>
+                    <p><strong>Complete plan for Canadian visa application</strong></p>
+                    <h4>Day 1: Arrival in Toronto</h4>
+                    <p>• Morning: Arrive at Toronto Pearson Airport<br>
+                    • Afternoon: Check into downtown hotel<br>
+                    • Evening: CN Tower visit and dinner</p>
+                    
+                    <h4>Day 2: Toronto Exploration</h4>
+                    <p>• Morning: Royal Ontario Museum<br>
+                    • Afternoon: Distillery District walking tour<br>
+                    • Evening: Harbourfront entertainment</p>
+                    
+                    <h4>Day 3: Niagara Day Trip</h4>
+                    <p>• Morning: Travel to Niagara Falls<br>
+                    • Afternoon: Maid of the Mist boat tour<br>
+                    • Evening: Return to Toronto</p>`
+                };
+
+                return itineraries[country] || `<h3>${duration}-Day ${country} Itinerary</h3>
+                <p><strong>Perfect for your visa application</strong></p>
+                <h4>Day 1: Arrival</h4>
+                <p>• Morning: Arrive at international airport<br>
+                • Afternoon: Transfer to hotel and check-in<br>
+                • Evening: Local area exploration</p>
+                
+                <h4>Day 2: Cultural Experience</h4>
+                <p>• Morning: Visit main historical sites<br>
+                • Afternoon: Local museum and cultural center<br>
+                • Evening: Traditional cuisine experience</p>
+                
+                <h4>Day 3: City Exploration</h4>
+                <p>• Morning: Famous landmarks and monuments<br>
+                • Afternoon: Shopping and local markets<br>
+                • Evening: Cultural performance or show</p>
+                
+                <p><em>This itinerary includes all major attractions and provides a balanced experience of culture, history, and leisure activities perfect for visa applications.</em></p>`;
+            }
+
+            // Form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const country = document.getElementById('country').value;
+                const duration = document.getElementById('duration').value;
+
+                // Show loading, hide form
+                form.style.display = 'none';
+                loading.style.display = 'block';
+                results.style.display = 'none';
+
+                // Get itinerary (tries AI first, falls back to demo)
+                const itinerary = await tryAIThenDemo(country, duration);
+                
+                // Display results
+                itineraryOutput.innerHTML = itinerary;
+                loading.style.display = 'none';
+                results.style.display = 'block';
+            });
+
+            // Download PDF
+            downloadPdfBtn.addEventListener('click', function() {
+                const country = document.getElementById('country').value;
+                const duration = document.getElementById('duration').value;
+                
+                const doc = new jsPDF();
+                doc.setFontSize(20);
+                doc.text(`Visa Itinerary: ${country}`, 105, 20, { align: 'center' });
+                doc.setFontSize(14);
+                doc.text(`${duration}-Day Travel Plan`, 105, 30, { align: 'center' });
+                
+                doc.setFontSize(10);
+                doc.text(`Created on: ${new Date().toLocaleDateString()}`, 105, 40, { align: 'center' });
+                
+                doc.line(20, 45, 190, 45);
+                
+                doc.setFontSize(12);
+                const splitText = doc.splitTextToSize(itineraryOutput.textContent, 170);
+                doc.text(split极, 20, 60);
+                
+                doc.setFontSize(8);
+                doc.text('Generated by VisaPlan.ai - For visa application purposes only', 105, 280, { align: 'center' });
+                
+                doc.save(`Visa-Itinerary-${country}.pdf`);
+            });
+
+            // Start over
+            startOverBtn.addEventListener('click', function() {
+                form.reset();
+                form.style.display = 'block';
+                results.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
